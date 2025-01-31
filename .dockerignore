@@ -8,3 +8,6 @@ test-dump
 samples
 model_training
 gui
+data
+./opengaze/testr.py
+

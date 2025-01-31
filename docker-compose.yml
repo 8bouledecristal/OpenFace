@@ -8,17 +8,27 @@ services:
   ## Image runtime service
   ## This can be used to add volume mounts or pass environment variables
   ## Todo: make a service which can use the container interactively
-  openface:
+  api:
     container_name: openface
     build:
       context: .
       dockerfile: docker/Dockerfile
     image: "${DOCKERUSER}/openface:${DOCKERTAG}"
+    ports:
+      - "8000:8000"
+    # develop: 
+    #   watch: 
+    #     - action : sync
+    #       path : /opengaze/
+    #       target : /opengaze/
     tty: true
-    volumes:
-      - "${DATA_MOUNT}:${DATA_MOUNT}"
+    # volumes:
+    #   - ./data:/tmp/openface
     environment:
-      DATA_MOUNT: "${DATA_MOUNT}"
-    command: ["bash"]
-
+      # DATA_MOUNT: "/tmp/openface"
+      LC_ALL : C.UTF-8
+      LANG : C.UTF-8
+    # command: bash
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+  
 ...

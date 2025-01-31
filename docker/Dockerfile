@@ -12,6 +12,7 @@ RUN wget -q https://www.dropbox.com/s/7na5qsjzz8yfoer/cen_patches_0.25_of.dat &&
     wget -q https://www.dropbox.com/s/ixt4vkbmxgab1iu/cen_patches_0.50_of.dat &&\
     wget -q https://www.dropbox.com/s/2t5t1sdpshzfhpj/cen_patches_1.00_of.dat
 
+
 ## ==================== Install Ubuntu Base libs ===========================
 ## This will be our base image for OpenFace, and also the base for the compiler
 ## image. We only need packages which are linked
@@ -31,6 +32,11 @@ RUN apt-get update -qq &&\
         libtbb2 libtbb-dev libjpeg-dev \
         libpng-dev libtiff-dev &&\
     rm -rf /var/lib/apt/lists/*
+
+
+
+# RUN apt-get update && apt-get install -y libopenblas-dev
+
 
 ## ==================== Build-time dependency libs ======================
 ## This will build and install opencv and dlib into an additional dummy
@@ -90,10 +96,20 @@ COPY ./ ./
 COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
+
+
 RUN mkdir -p build && cd build && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
     ninja &&\
     DESTDIR=/root/diff ninja install
+
+# RUN mkdir -p build && cd build && \
+#     CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
+#     -D OpenBLAS_INCLUDE_DIR=/usr/include \
+#     -D OpenBLAS_LIB=/usr/lib/x86_64-linux-gnu/libopenblas.so \
+#     -G Ninja .. && \
+#     ninja && \
+#     DESTDIR=/root/diff ninja install
 
 
 ## ==================== Streamline container ===========================
@@ -108,3 +124,27 @@ COPY --from=openface /root/diff /
 
 # Since we "imported" the build artifacts, we need to reconfigure ld
 RUN ldconfig
+
+
+## ==================== Python ===========================
+
+WORKDIR /root/openface/opengaze
+
+COPY ./opengaze .
+
+# Install Python and FastAPI dependencies
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    pip3 install -r requirements.txt
+    # pip3 install --no-cache-dir fastapi uvicorn==0.16.0
+
+# # Copy FastAPI application
+# COPY main.py /root/main.py
+
+# # Expose FastAPI port
+EXPOSE 8000
+
+# ENV LC_CTYPE=en_US.UTF-8
+
+
+# Command to run FastAPI server
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
