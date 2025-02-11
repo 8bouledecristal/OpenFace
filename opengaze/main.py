@@ -29,9 +29,9 @@ async def upload_photo(file: UploadFile = File(...)):
         # TODO faire le subprocess, importer pandas et renvoyer la réponse sous forme de json ou csv c'est mpoins lourd
         command = ["FeatureExtraction", "-gaze", "-f", file_path, "-of", "/tmp/openface/output.csv"]
         # command = f"FeatureExtraction -gaze -f {file_path} -of /tmp/openface/output.csv"
-        print(command)
+        # print(command)
         subprocess.check_call(command)
-        print("ok")
+        # print("ok")
         
         csv_path = "/tmp/openface/output.csv"
 
@@ -48,7 +48,7 @@ async def upload_photo(file: UploadFile = File(...)):
                     }
                    for row in reader]
         
-            print(out)
+            # print(out)
 
             # use gaze_data = list(reader) to get all the rows
             gaze_data = list(out)

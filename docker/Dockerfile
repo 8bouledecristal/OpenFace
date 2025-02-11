@@ -16,11 +16,22 @@ RUN wget -q https://www.dropbox.com/s/7na5qsjzz8yfoer/cen_patches_0.25_of.dat &&
 ## ==================== Install Ubuntu Base libs ===========================
 ## This will be our base image for OpenFace, and also the base for the compiler
 ## image. We only need packages which are linked
+ARG TARGETPLATFORM
 
-FROM ubuntu:18.04 as ubuntu_base
+# Default to amd64 base image
+ARG BASE_IMAGE=""
+ARG OPENBLAS_LIB=/usr/lib/x86_64-linux-gnu/libopenblas.so
+ARG ARCH_FLAGS=""
 
+# Override for ARM64
+RUN if [ "$TARGETPLATFORM" = "arm64/v8" ]; then \
+        BASE_IMAGE="arm64v8"; \
+        OPENBLAS_LIB="/usr/lib/aarch64-linux-gnu/libopenblas.so"; \
+        ARCH_FLAGS="-march=armv8-a"; \
+    fi
+
+FROM ${BASE_IMAGE}ubuntu:18.04 as ubuntu_base
 LABEL maintainer="Michael McDermott <mikemcdermott23@gmail.com>"
-
 ARG DEBIAN_FRONTEND=noninteractive
 
 # todo: minimize this even more
@@ -34,7 +45,8 @@ RUN apt-get update -qq &&\
     rm -rf /var/lib/apt/lists/*
 
 
-
+RUN apt-get update && apt-get install -y libopenblas-dev
+RUN ldconfig -p | grep openblas
 # RUN apt-get update && apt-get install -y libopenblas-dev
 
 
@@ -96,21 +108,28 @@ COPY ./ ./
 COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
-
-
 RUN mkdir -p build && cd build && \
-    cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
-    ninja &&\
+    CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D OpenBLAS_INCLUDE_DIR=/usr/include \
+    -D OpenBLAS_LIB=${OPENBLAS_LIB} \
+    -G Ninja .. \
+    -DCMAKE_CXX_FLAGS="${ARCH_FLAGS}" \
+    -DCMAKE_C_FLAGS="${ARCH_FLAGS}" && \
+    ninja && \
     DESTDIR=/root/diff ninja install
 
-# RUN mkdir -p build && cd build && \
-#     CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
-#     -D OpenBLAS_INCLUDE_DIR=/usr/include \
-#     -D OpenBLAS_LIB=/usr/lib/x86_64-linux-gnu/libopenblas.so \
-#     -G Ninja .. && \
-#     ninja && \
-#     DESTDIR=/root/diff ninja install
+## ==================== Python ===========================
 
+WORKDIR /root/openface/opengaze
+
+COPY ./opengaze .
+
+# Install Python and FastAPI dependencies
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    pip3 install -r requirements.txt
+
+# # Expose FastAPI port
+EXPOSE 8000
 
 ## ==================== Streamline container ===========================
 ## Clean up - start fresh and only copy in necessary stuff
@@ -126,25 +145,3 @@ COPY --from=openface /root/diff /
 RUN ldconfig
 
 
-## ==================== Python ===========================
-
-WORKDIR /root/openface/opengaze
-
-COPY ./opengaze .
-
-# Install Python and FastAPI dependencies
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    pip3 install -r requirements.txt
-    # pip3 install --no-cache-dir fastapi uvicorn==0.16.0
-
-# # Copy FastAPI application
-# COPY main.py /root/main.py
-
-# # Expose FastAPI port
-EXPOSE 8000
-
-# ENV LC_CTYPE=en_US.UTF-8
-
-
-# Command to run FastAPI server
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
