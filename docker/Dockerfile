@@ -109,27 +109,37 @@ COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
 RUN mkdir -p build && cd build && \
-    CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D OpenBLAS_INCLUDE_DIR=/usr/include \
-    -D OpenBLAS_LIB=${OPENBLAS_LIB} \
-    -G Ninja .. \
-    -DCMAKE_CXX_FLAGS="${ARCH_FLAGS}" \
-    -DCMAKE_C_FLAGS="${ARCH_FLAGS}" && \
+    if [ "$TARGETARCH" = "arm64/v8" ]; then \
+        CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
+            -D OpenBLAS_INCLUDE_DIR=/usr/include \
+            -D OpenBLAS_LIB=/usr/lib/aarch64-linux-gnu/libopenblas.so \
+            -G Ninja .. \
+            -DCMAKE_CXX_FLAGS="-march=armv8-a" \
+            -DCMAKE_C_FLAGS="-march=armv8-a"; \
+    else \
+        cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja ..; \
+    fi && \
     ninja && \
     DESTDIR=/root/diff ninja install
 
-## ==================== Python ===========================
+    # ARM
+# RUN mkdir -p build && cd build && \
+#     CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
+#     -D OpenBLAS_INCLUDE_DIR=/usr/include \
+#     -D OpenBLAS_LIB=${OPENBLAS_LIB} \
+#     -G Ninja .. \
+#     -DCMAKE_CXX_FLAGS="${ARCH_FLAGS}" \
+#     -DCMAKE_C_FLAGS="${ARCH_FLAGS}" && \
+#     ninja && \
+#     DESTDIR=/root/diff ninja install
 
-WORKDIR /root/openface/opengaze
+    # AMD
+# RUN mkdir -p build && cd build && \
+#     cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
+#     ninja &&\
+#     DESTDIR=/root/diff ninja install
 
-COPY ./opengaze .
 
-# Install Python and FastAPI dependencies
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    pip3 install -r requirements.txt
-
-# # Expose FastAPI port
-EXPOSE 8000
 
 ## ==================== Streamline container ===========================
 ## Clean up - start fresh and only copy in necessary stuff
@@ -144,4 +154,16 @@ COPY --from=openface /root/diff /
 # Since we "imported" the build artifacts, we need to reconfigure ld
 RUN ldconfig
 
+## ==================== Python ===========================
+
+WORKDIR /root/openface/opengaze
+
+COPY ./opengaze .
+
+# Install Python and FastAPI dependencies
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    pip3 install -r requirements.txt
+
+# # Expose FastAPI port
+EXPOSE 8000
 
