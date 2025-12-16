@@ -36,7 +36,9 @@ RUN apt-get update -qq &&\
         libopenblas-dev liblapack-dev \
         libavcodec-dev libavformat-dev libswscale-dev \
         libtbb2 libtbb-dev libjpeg-dev \
-        libpng-dev libtiff-dev &&\
+        libpng-dev libtiff-dev python3-dev \ 
+        libboost-python-dev libboost-filesystem-dev \
+        libboost-system-dev &&\
     rm -rf /var/lib/apt/lists/*
 
 ## ==================== Build-time dependency libs ======================
@@ -104,10 +106,10 @@ COPY . .
 COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
-# RUN mkdir -p build && cd build && \
-#     cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
-#     ninja &&\
-#     DESTDIR=/root/diff ninja install
+RUN mkdir -p build && cd build && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
+    ninja &&\
+    DESTDIR=/root/diff ninja install
 
 
 
