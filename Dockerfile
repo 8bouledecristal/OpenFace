@@ -38,7 +38,7 @@ RUN apt-get update -qq &&\
         libtbb2 libtbb-dev libjpeg-dev \
         libpng-dev libtiff-dev python3-dev \ 
         libboost-python-dev libboost-filesystem-dev \
-        libboost-system-dev &&\
+        libboost-system-dev python3-pip &&\
     rm -rf /var/lib/apt/lists/*
 
 ## ==================== Build-time dependency libs ======================
@@ -66,10 +66,16 @@ RUN curl http://dlib.net/files/dlib-19.13.tar.bz2 -LO &&\
     mv dlib-19.13 dlib &&\
     mkdir -p dlib/build
 
+# TODO Le flag USE_AVX_INSTRUCTIONS peut causer des problèmes 
+# TODO sur ARM64, il faut donc faire une condition. 
 RUN cd dlib/build && \
     cmake -DCMAKE_BUILD_TYPE=Release \
           -G Ninja \
+          -DDLIB_USE_CUDA=OFF \
+          -DUSE_AVX_INSTRUCTIONS=ON \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -DDLIB_NO_GUI_SUPPORT=ON \
+          -DBUILD_SHARED_LIBS=ON \
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache .. &&\
     ninja  && \
@@ -106,10 +112,10 @@ COPY . .
 COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
-RUN mkdir -p build && cd build && \
-    cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
-    ninja &&\
-    DESTDIR=/root/diff ninja install
+# RUN mkdir -p build && cd build && \
+#     cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
+#     ninja &&\
+#     DESTDIR=/root/diff ninja install
 
 
 

@@ -7,7 +7,16 @@ find_package( Boost 1.5.9 REQUIRED COMPONENTS filesystem system python)
 # Python stuff.
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 include_directories(${Python3_INCLUDE_DIRS})
-
+message(-----------------)
+message(${Python3_INCLUDE_DIRS})
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+    OUTPUT_VARIABLE NumPy_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+include_directories(${Python3_INCLUDE_DIRS} ${NumPy_INCLUDE_DIR})
+message(STATUS "NumPy include dir: ${NumPy_INCLUDE_DIR}")
+message(-----------------)
 # TBB library.
 include_directories(${TBB_ROOT_DIR}/include)
 

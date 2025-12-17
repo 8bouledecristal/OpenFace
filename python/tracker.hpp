@@ -31,14 +31,14 @@ printErrorAndAbort( std::string( "Fatal error: " ) + stream )
 class Tracker{
 
   public:
-	Tracker(vector<string> &args);
-    bool tracking(cv::Mat &video_capture, vector<cv::Rect_<double> > &face_rects, vector<cv::Mat_<double> > &face_landmarks);
+	Tracker(std::vector<string> &args);
+    bool tracking(cv::Mat &video_capture, std::vector<cv::Rect_<double> > &face_rects, std::vector<cv::Mat_<double> > &face_landmarks);
 
   private:
-    vector<string> get_arguments(int argc, char **argv);
-    void NonOverlapingDetections(const vector<LandmarkDetector::CLNF>& clnf_models, vector<cv::Rect_<double> >& face_detections);
+    std::vector<string> get_arguments(int argc, char **argv);
+    void NonOverlapingDetections(const std::vector<LandmarkDetector::CLNF>& clnf_models, std::vector<cv::Rect_<double> >& face_detections);
 
-	vector<string> arguments;
+	std::vector<string> arguments;
 
 	int frame_count;
 	cv::Mat captured_image;
@@ -47,7 +47,7 @@ class Tracker{
 	cv::Mat_<uchar> grayscale_image;
 	cv::Mat disp_image;
 
-	vector<cv::Rect_<double> > face_detections;
+	std::vector<cv::Rect_<double> > face_detections;
 
 	// saving the videos
 	string current_file;
@@ -70,13 +70,13 @@ class Tracker{
 	bool cx_undefined;
 
 	// Some initial parameters that can be overriden from command line	
-	vector<string> files, depth_directories, tracked_videos_output, dummy_out;
+	std::vector<string> files, depth_directories, tracked_videos_output, dummy_out;
 
 	// The modules that are being used for tracking
 	//LandmarkDetector::FaceModelParameters det_params;
-	vector<LandmarkDetector::FaceModelParameters> det_parameters;
-	vector<LandmarkDetector::CLNF> clnf_models;
-	vector<bool> active_models;
+	std::vector<LandmarkDetector::FaceModelParameters> det_parameters;
+	std::vector<LandmarkDetector::CLNF> clnf_models;
+	std::vector<bool> active_models;
 	int num_faces_max;
 	bool all_models_active;
 	char active_m_C[255];
