@@ -29,3 +29,7 @@
     face_keypoints = tr_results[1]
     face_keypoints = [(int(kp[0]), int(kp[1])) for kp in zip(face_keypoints[0], face_keypoints[1])]
 
+
+echo "/root/diff/usr/local/lib" > /etc/ld.so.conf.d/openface.conf
+ldconfig
+

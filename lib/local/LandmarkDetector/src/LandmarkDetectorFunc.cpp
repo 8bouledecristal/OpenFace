@@ -360,7 +360,6 @@ bool LandmarkDetector::DetectLandmarksInVideo(const cv::Mat &rgb_image, CLNF& cl
 				clnf_model.model_likelihood = likelihood_init;
 				clnf_model.detected_landmarks = detected_landmarks_init.clone();
 				clnf_model.landmark_likelihoods = landmark_likelihoods_init.clone();
-
 				return false;
 			}
 			else
@@ -371,7 +370,6 @@ bool LandmarkDetector::DetectLandmarksInVideo(const cv::Mat &rgb_image, CLNF& cl
 				{
 					UpdateTemplate(grayscale_image, clnf_model);
 				}
-
 				return true;
 			}
 		}

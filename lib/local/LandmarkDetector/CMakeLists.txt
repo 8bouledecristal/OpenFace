@@ -20,6 +20,7 @@ set(SOURCE
     src/PDM.cpp
     src/SVR_patch_expert.cpp
     src/stdafx.cpp
+    src/CNN_utils.cpp
 )
 
 set(HEADERS
@@ -35,6 +36,7 @@ set(HEADERS
     include/PDM.h
     include/SVR_patch_expert.h        
     include/stdafx.h
+    include/CNN_utils.h
 )
 
 # Build a single shared library

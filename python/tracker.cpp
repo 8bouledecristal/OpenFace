@@ -14,14 +14,14 @@ vector<string> Tracker::get_arguments(int argc, char **argv)
 	return arguments;
 }
 
-void Tracker::NonOverlapingDetections(const vector<LandmarkDetector::CLNF>& clnf_models, vector<cv::Rect_<double> >& face_detections)
+void Tracker::NonOverlapingDetections(const vector<LandmarkDetector::CLNF>& clnf_models, vector<cv::Rect_<float> >& face_detections)
 {
 
 	// Go over the model and eliminate detections that are not informative (there already is a tracker there)
 	for(size_t model = 0; model < clnf_models.size(); ++model)
 	{
 		// See if the detections intersect
-		cv::Rect_<double> model_rect = clnf_models[model].GetBoundingBox();
+		cv::Rect_<float> model_rect = clnf_models[model].GetBoundingBox();
 		
 		for(int detection = face_detections.size()-1; detection >=0; --detection)
 		{
@@ -61,14 +61,16 @@ Tracker::Tracker(vector<string> &args) : frame_count(0),
 	det_params.curr_face_detector = LandmarkDetector::FaceModelParameters::HOG_SVM_DETECTOR;
 	det_parameters.push_back(det_params);
 
-	LandmarkDetector::get_video_input_output_params(files, depth_directories, dummy_out, tracked_videos_output, u, output_codec, arguments);
+	// LandmarkDetector::get_video_input_output_params(files, depth_directories, dummy_out, tracked_videos_output, u, output_codec, arguments);
 	use_depth = !depth_directories.empty();
 	// Get camera parameters
-	LandmarkDetector::get_camera_params(device, fx, fy, cx, cy, arguments);
+	// LandmarkDetector::get_camera_params(device, fx, fy, cx, cy, arguments);
 
+	det_parameters[0].model_location = "/root/openface/lib/local/LandmarkDetector/model/main_clnf_general.txt";
+	det_parameters[0].haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_default.xml";
 	LandmarkDetector::CLNF clnf_model(det_parameters[0].model_location);
-	clnf_model.face_detector_HAAR.load(det_parameters[0].face_detector_location);
-	clnf_model.face_detector_location = det_parameters[0].face_detector_location;
+	clnf_model.face_detector_HAAR.load(det_parameters[0].haar_face_detector_location);
+	clnf_model.haar_face_detector_location = det_parameters[0].haar_face_detector_location;
 	clnf_models.reserve(num_faces_max);
 	clnf_models.push_back(clnf_model);
 
@@ -151,7 +153,8 @@ bool Tracker::tracking(cv::Mat &video_capture,
 
 	if(captured_image.channels() == 3)
 	{
-		cv::cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);				
+		// TODO CV_BGR2GRAY
+		cv::cvtColor(captured_image, grayscale_image, 6);				
 	}
 	else
 	{
@@ -171,7 +174,7 @@ bool Tracker::tracking(cv::Mat &video_capture,
 	{				
 		if(det_parameters[0].curr_face_detector == LandmarkDetector::FaceModelParameters::HOG_SVM_DETECTOR)
 		{
-			vector<double> confidences;
+			vector<float> confidences;
 			LandmarkDetector::DetectFacesHOG(face_detections, grayscale_image, clnf_models[0].face_detector_HOG, confidences);
 		}
 		else
@@ -207,23 +210,23 @@ bool Tracker::tracking(cv::Mat &video_capture,
 			
 			for(size_t detection_ind = 0; detection_ind < face_detections.size(); ++detection_ind)
 			{
-				// if it was not taken by another tracker take it (if it is false swap it to true and enter detection, this makes it parallel safe)
-				if(face_detections_used[detection_ind].compare_and_swap(true, false) == false)
-				{
+				// // if it was not taken by another tracker take it (if it is false swap it to true and enter detection, this makes it parallel safe)
+				// if(face_detections_used[detection_ind].compare_and_swap(true, false) == false)
+				// {
 			
-					// Reinitialise the model
-					clnf_models[model].Reset();
+				// 	// Reinitialise the model
+				// 	clnf_models[model].Reset();
 
-					// This ensures that a wider window is used for the initial landmark localisation
-					clnf_models[model].detection_success = false;
-					detection_success = LandmarkDetector::DetectLandmarksInVideo(grayscale_image, depth_image, face_detections[detection_ind], clnf_models[model], det_parameters[model]);
+				// 	// This ensures that a wider window is used for the initial landmark localisation
+				// 	clnf_models[model].detection_success = false;
+				// 	detection_success = LandmarkDetector::DetectLandmarksInVideo(grayscale_image, depth_image, face_detections[detection_ind], clnf_models[model], det_parameters[model]);
 											
-					// This activates the model
-					active_models[model] = true;
+				// 	// This activates the model
+				// 	active_models[model] = true;
 
-					// break out of the loop as the tracker has been reinitialised
-					break;
-				}
+				// 	// break out of the loop as the tracker has been reinitialised
+				// 	break;
+				// }
 
 			}
 		}
@@ -243,33 +246,33 @@ bool Tracker::tracking(cv::Mat &video_capture,
 
 		double visualisation_boundary = -0.1;
 	
-		// Only draw if the reliability is reasonable, the value is slightly ad-hoc
-		if(detection_certainty < visualisation_boundary)
-		{
-			LandmarkDetector::Draw(disp_image, clnf_models[model]);
+		// // Only draw if the reliability is reasonable, the value is slightly ad-hoc
+		// if(detection_certainty < visualisation_boundary)
+		// {
+		// 	LandmarkDetector::Draw(disp_image, clnf_models[model]);
 
-			if(detection_certainty > 1)
-				detection_certainty = 1;
-			if(detection_certainty < -1)
-				detection_certainty = -1;
+		// 	if(detection_certainty > 1)
+		// 		detection_certainty = 1;
+		// 	if(detection_certainty < -1)
+		// 		detection_certainty = -1;
 
-			detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
+		// 	detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
 
-			// A rough heuristic for box around the face width
-			int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
+		// 	// A rough heuristic for box around the face width
+		// 	int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
 			
-			// Work out the pose of the head from the tracked model
-			cv::Vec6d pose_estimate = LandmarkDetector::GetCorrectedPoseWorld(clnf_models[model], fx, fy, cx, cy);
+		// 	// Work out the pose of the head from the tracked model
+		// 	cv::Vec6d pose_estimate = LandmarkDetector::GetCorrectedPoseWorld(clnf_models[model], fx, fy, cx, cy);
 			
-			// Draw it in reddish if uncertain, blueish if certain
-			LandmarkDetector::DrawBox(disp_image, pose_estimate, cv::Scalar((1-detection_certainty)*255.0,0, detection_certainty*255), thickness, fx, fy, cx, cy);
+		// 	// Draw it in reddish if uncertain, blueish if certain
+		// 	LandmarkDetector::DrawBox(disp_image, pose_estimate, cv::Scalar((1-detection_certainty)*255.0,0, detection_certainty*255), thickness, fx, fy, cx, cy);
 
-			cv::Mat_<double> landmarks_2d = clnf_models[model].detected_landmarks;
-			landmarks_2d = landmarks_2d.reshape(1, 2);
-			cv::Rect_<double> rect = clnf_models[model].GetBoundingBox();
-			face_rects.push_back(rect);
-			face_landmarks.push_back(landmarks_2d);
-		}
+		// 	cv::Mat_<double> landmarks_2d = clnf_models[model].detected_landmarks;
+		// 	landmarks_2d = landmarks_2d.reshape(1, 2);
+		// 	cv::Rect_<double> rect = clnf_models[model].GetBoundingBox();
+		// 	face_rects.push_back(rect);
+		// 	face_landmarks.push_back(landmarks_2d);
+		// }
 	}
 
 	// Work out the framerate

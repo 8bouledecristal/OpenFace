@@ -38,7 +38,8 @@ RUN apt-get update -qq &&\
         libtbb2 libtbb-dev libjpeg-dev \
         libpng-dev libtiff-dev python3-dev \ 
         libboost-python-dev libboost-filesystem-dev \
-        libboost-system-dev python3-pip &&\
+        libboost-system-dev python3-pip \
+        apt-get install ffmpeg libsm6 libxext6 && \
     rm -rf /var/lib/apt/lists/*
 
 ## ==================== Build-time dependency libs ======================

@@ -10,6 +10,9 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+// TBB include
+#include <tbb/tbb.h>
+
 #define INFO_STREAM( stream ) \
 std::cout << stream << std::endl
 
@@ -31,32 +34,32 @@ printErrorAndAbort( std::string( "Fatal error: " ) + stream )
 class Tracker{
 
   public:
-	Tracker(std::vector<string> &args);
+	Tracker(std::vector<std::string> &args);
     bool tracking(cv::Mat &video_capture, std::vector<cv::Rect_<double> > &face_rects, std::vector<cv::Mat_<double> > &face_landmarks);
 
   private:
-    std::vector<string> get_arguments(int argc, char **argv);
-    void NonOverlapingDetections(const std::vector<LandmarkDetector::CLNF>& clnf_models, std::vector<cv::Rect_<double> >& face_detections);
+    std::vector<std::string> get_arguments(int argc, char **argv);
+    void NonOverlapingDetections(const std::vector<LandmarkDetector::CLNF>& clnf_models, std::vector<cv::Rect_<float> >& face_detections);
 
-	std::vector<string> arguments;
+	std::vector<std::string> arguments;
 
 	int frame_count;
 	cv::Mat captured_image;
 	// Reading the images
-	cv::Mat_<float> depth_image;
+	cv::Mat_<double> depth_image;
 	cv::Mat_<uchar> grayscale_image;
 	cv::Mat disp_image;
 
-	std::vector<cv::Rect_<double> > face_detections;
+	std::vector<cv::Rect_<float> > face_detections;
 
 	// saving the videos
-	string current_file;
+	std::string current_file;
 	cv::VideoWriter writerFace;
 	// Get the input output file parameters
 	bool u;
-	string output_codec;
+	std::string output_codec;
 	char fpsC[255];
-	string fpsSt;
+	std::string fpsSt;
 
 	// If multiple video files are tracked, use this to indicate if we are done
 	bool done;	
@@ -70,7 +73,7 @@ class Tracker{
 	bool cx_undefined;
 
 	// Some initial parameters that can be overriden from command line	
-	std::vector<string> files, depth_directories, tracked_videos_output, dummy_out;
+	std::vector<std::string> files, depth_directories, tracked_videos_output, dummy_out;
 
 	// The modules that are being used for tracking
 	//LandmarkDetector::FaceModelParameters det_params;
@@ -80,7 +83,7 @@ class Tracker{
 	int num_faces_max;
 	bool all_models_active;
 	char active_m_C[255];
-	string active_models_st;
+	std::string active_models_st;
 	int num_active_models;
 
 	bool use_depth;

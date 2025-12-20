@@ -19,35 +19,45 @@ Detector * Detector::Create(const char *binary_path) {
   arguments.push_back(string(binary_path));
 
   LandmarkDetector::FaceModelParameters det_parameters(arguments);
-  det_parameters.track_gaze = false;
-  // No need to validate detections, as we're not doing tracking.
-  det_parameters.validate_detections = false;
+  std::cout << "model location " << det_parameters.model_location << std::endl;
+  // det_parameters.track_gaze = false;
+  // // No need to validate detections, as we're not doing tracking.
+  // det_parameters.validate_detections = false;
 
-  // Grab camera parameters, if they are not defined 
-  // (approximate values will be used).
-  float fx = 0, fy = 0, cx = 0, cy = 0;
-  int device = -1;
-  // Get camera parameters
-  LandmarkDetector::get_camera_params(device, fx, fy, cx, cy, arguments);
-  // If cx (optical axis centre) is undefined will use the image size/2 as 
-  // an estimate.
-  bool cx_undefined = false;
-  bool fx_undefined = false;
-  if (cx == 0 || cy == 0) {
-    cx_undefined = true;
-  }
-  if (fx == 0 || fy == 0) {
-    fx_undefined = true;
-  }
+  // // Grab camera parameters, if they are not defined 
+  // // (approximate values will be used).
+  // float fx = 0, fy = 0, cx = 0, cy = 0;
+  // int device = -1;
+  // // Get camera parameters
+  // LandmarkDetector::get_camera_params(device, fx, fy, cx, cy, arguments);
+  // // If cx (optical axis centre) is undefined will use the image size/2 as 
+  // // an estimate.
+  // bool cx_undefined = false;
+  // bool fx_undefined = false;
+  // if (cx == 0 || cy == 0) {
+  //   cx_undefined = true;
+  // }
+  // if (fx == 0 || fy == 0) {
+  //   fx_undefined = true;
+  // }
 
   // The modules that are being used for tracking.
   LandmarkDetector::CLNF clnf_model(det_parameters.model_location);
+
+  if (!clnf_model.loaded_successfully)
+	{
+		std::cout << "ERROR: Could not load the landmark detector" << std::endl;
+    throw ;
+	}
+
   
-  cv::CascadeClassifier classifier(det_parameters.face_detector_location);
+
+  det_parameters.haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_default.xml";
+  cv::CascadeClassifier classifier(det_parameters.haar_face_detector_location);
+  
   dlib::frontal_face_detector face_detector_hog = dlib::get_frontal_face_detector();
-
+  std::cout << "ouin" << std::endl ; 
   return new Detector(det_parameters, clnf_model, classifier, face_detector_hog);
-
 }
 
 Detector::Detector(LandmarkDetector::FaceModelParameters &det_parameters,
@@ -65,14 +75,16 @@ bool CompareRect(cv::Rect_<double> r1, cv::Rect_<double> r2) {
 
 cv::Rect_<double> Detector::DetectFace(const cv::Mat &grayscale_frame) {
 
-  vector<cv::Rect_<double>> face_detections;
+  vector<cv::Rect_<float> > face_detections;
 
   if(det_parameters_.curr_face_detector == LandmarkDetector::FaceModelParameters::HOG_SVM_DETECTOR) {
-    vector<double> confidences;
+    vector<float> confidences;
     //cout << "  DetectFacesHOG" << std::endl;
     LandmarkDetector::DetectFacesHOG( face_detections, grayscale_frame, face_detector_hog_, confidences);
   } else {
     //cout << "  DetectFaces" << std::endl;
+    // float min_width = -1;
+    // cv::Rect_<float> roi = cv::Rect_<float>(0.0, 0.0, 1.0, 1.0);
     LandmarkDetector::DetectFaces( face_detections, grayscale_frame, classifier_);
   }
   
@@ -89,23 +101,23 @@ cv::Rect_<double> Detector::DetectFace(const cv::Mat &grayscale_frame) {
 
 }
 
-cv::Mat_<int> Detector::GetVisibilities() {
-  int idx = clnf_model_.patch_experts.GetViewIdx(clnf_model_.params_global, 0);
-  return clnf_model_.patch_experts.visibilities[0][idx];
-}
+// cv::Mat_<int> Detector::GetVisibilities() {
+//   int idx = clnf_model_.patch_experts.GetViewIdx(clnf_model_.params_global, 0);
+//   return clnf_model_.patch_experts.visibilities[0][idx];
+// }
 
-cv::Mat_<double> Detector::Run(const cv::Mat &grayscale_frame, const cv::Rect_<double> &face_rect){
+// cv::Mat_<double> Detector::Run(const cv::Mat &grayscale_frame, const cv::Rect_<double> &face_rect){
 
-  cv::Mat_<float> depth_image;
-  bool success = LandmarkDetector::DetectLandmarksInImage( grayscale_frame, depth_image, face_rect, clnf_model_, det_parameters_);
+//   cv::Mat_<float> depth_image;
+//   bool success = LandmarkDetector::DetectLandmarksInImage( grayscale_frame, depth_image, face_rect, clnf_model_, det_parameters_);
 
-  if (!success) {
-    throw std::runtime_error("Unable to detect landmarks");
-  }
+//   if (!success) {
+//     throw std::runtime_error("Unable to detect landmarks");
+//   }
 
-  cv::Mat_<double> landmarks_2d = clnf_model_.detected_landmarks;
-  landmarks_2d = landmarks_2d.reshape(1, 2);
+//   cv::Mat_<double> landmarks_2d = clnf_model_.detected_landmarks;
+//   landmarks_2d = landmarks_2d.reshape(1, 2);
 
-  return landmarks_2d;
+//   return landmarks_2d;
 
-}
+// }
