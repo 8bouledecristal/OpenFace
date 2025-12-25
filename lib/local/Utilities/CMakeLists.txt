@@ -23,7 +23,7 @@ SET(HEADERS
 	include/ConcurrentQueue.h
 )
 
-add_library( Utilities ${SOURCE} ${HEADERS})
+add_library( Utilities SHARED ${SOURCE} ${HEADERS})
 add_library( OpenFace::Utilities ALIAS Utilities)
 
 target_include_directories(Utilities PUBLIC
@@ -42,6 +42,8 @@ if(${Boost_FOUND})
 else()
 	target_link_libraries(Utilities PUBLIC stdc++fs)
 endif()
+
+set_target_properties(FaceAnalyser PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
 install (TARGETS Utilities EXPORT OpenFaceTargets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install (FILES ${HEADERS} DESTINATION include/OpenFace)

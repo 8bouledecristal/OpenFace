@@ -1,44 +1,58 @@
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 cmake_minimum_required(VERSION 3.16)
+project(pyopenface LANGUAGES CXX)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_PREFIX_PATH "/root/diff/usr/local" ${CMAKE_PREFIX_PATH})
-find_package( Boost 1.5.9 REQUIRED COMPONENTS filesystem system python)
+
+# Dependencies
+find_package(Boost REQUIRED COMPONENTS filesystem system python)
 find_package(dlib REQUIRED)
 
-# Python stuff.
+# Python
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-include_directories(${Python3_INCLUDE_DIRS})
-message(-----------------)
-message(${Python3_INCLUDE_DIRS})
+
 execute_process(
     COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
     OUTPUT_VARIABLE NumPy_INCLUDE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-include_directories(${Python3_INCLUDE_DIRS} ${NumPy_INCLUDE_DIR})
-message(STATUS "NumPy include dir: ${NumPy_INCLUDE_DIR}")
-message(-----------------)
-# TBB library.
-include_directories(${TBB_ROOT_DIR}/include)
 
-# Local libraries.
-include_directories(${LandmarkDetector_SOURCE_DIR}/include)
-include_directories(/root/openface/lib/local/GazeAnalyser/include)
-  
-include_directories(../lib/local/LandmarkDetector/include)
-include_directories(../lib/local/FaceAnalyser/include)  
-include_directories(../lib/local/Utilities/include)  
-include_directories(../lib/3rdParty/OpenCV/include/opencv2)  
-      
-add_library(pyopenface SHARED pyopenface.cpp detector.cpp featureextraction.cpp) # tracker.cpp
-# target_link_libraries(pyopenface LandmarkDetectorShared)
-target_link_libraries(pyopenface LandmarkDetectorShared FaceAnalyser GazeAnalyser Utilities dlib::dlib ${OpenCV_LIBS} ${Boost_LIBRARIES} ${Python3_LIBRARIES} ${TBB_LIBRARIES})
-# target_link_libraries(pyopenface dlib_shared)
+# pybind11
+set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11 CONFIG REQUIRED)
 
-set_property(TARGET pyopenface PROPERTY CXX_STANDARD 11)
-set_property(TARGET pyopenface PROPERTY SUFFIX .so)
-set_property(TARGET pyopenface PROPERTY PREFIX "")
+# Module
+pybind11_add_module(pyopenface
+    pyopenface.cpp
+    detector.cpp
+)
 
-install(TARGETS pyopenface LIBRARY DESTINATION /usr/lib/python3.8/dist-packages PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ GROUP_WRITE WORLD_WRITE WORLD_EXECUTE WORLD_READ)
+# Includes
+target_include_directories(pyopenface PRIVATE
+    ${Python3_INCLUDE_DIRS}
+    ${NumPy_INCLUDE_DIR}
+    ../lib/local/LandmarkDetector/include
+    ../lib/local/GazeAnalyser/include
+    ../lib/local/FaceAnalyser/include
+    ../lib/local/Utilities/include
+    ../lib/3rdParty/OpenCV/include
+)
 
+# Link libraries (KEYWORD SIGNATURE ONLY)
+target_link_libraries(pyopenface PRIVATE
+    LandmarkDetectorShared
+    FaceAnalyser
+    GazeAnalyser
+    Utilities
+    dlib::dlib
+    ${OpenCV_LIBS}
+    ${Boost_LIBRARIES}
+)
+
+set_target_properties(pyopenface PROPERTIES
+    CXX_STANDARD 11
+)
+
+install(TARGETS pyopenface
+    LIBRARY DESTINATION ${Python3_SITEARCH}
+)

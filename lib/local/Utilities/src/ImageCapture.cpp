@@ -337,6 +337,10 @@ void ImageCapture::SetCameraIntrinsics(float fx, float fy, float cx, float cy)
 		this->fx = fx;
 		this->fy = fy;
 	}
+	std::cout << "fx" << this->fx << std::endl;
+	std::cout << "fy" << this->fy << std::endl;
+	std::cout << "cx" << this->cx << std::endl;
+	std::cout << "cy" << this->cy << std::endl;
 }
 
 // Returns a read image in 3 channel RGB format, also prepares a grayscale frame if needed

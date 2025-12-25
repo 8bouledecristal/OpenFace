@@ -10,14 +10,25 @@ debug = True
 
 def main():
     # print(base_path)
-    featureextraction = pyopenface.Featureextraction('/root/openface/lib/local/LandmarkDetector/model/main_clnf_general.txt')
-    img = cv2.imread("/root/openface/samples/sample3.jpg")
-    start = time.time()
-    for i in range(100) : 
-        result = featureextraction.landmark(img)
-    print(time.time() - start)
+    # featureextraction = pyopenface.Featureextraction('/root/openface/lib/local/LandmarkDetector/model/main_clnf_general.txt')
+    # img = cv2.imread("/root/openface/samples/sample3.jpg")
+    # start = time.time()
+    # for i in range(100) : 
+    #     result = featureextraction.landmark(img)
+    # print(time.time() - start)
     # detector = pyopenface.Detector(base_path + "OpenFace/lib/local/LandmarkDetector/model/main_clnf_general.txt")
-    # detector = pyopenface.Detector('/root/openface/lib/local/LandmarkDetector/model/main_clnf_general.txt')
+    print("------------- DETECTOR init -----------------")
+    detector = pyopenface.Detector('/root/openface/lib/local/LandmarkDetector/model/main_ceclm_general.txt')
+    print("------------- Load Image -----------------")
+    img = cv2.imread("/root/openface/samples/tesla.jpg")
+    print("------------- DETECT -----------------")
+    face_rects_max = detector.detect(img)
+    print(face_rects_max)
+    print("------------- DETECT Landmark-----------------")
+    re = detector.landmark(img, face_rects_max)
+    face_keypoints = [(int(kp[0]), int(kp[1])) for kp in zip(re[0], re[1])]
+    print(face_keypoints)
+    
     # # tracker = pyopenface.Tracker()
     # 
     # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
