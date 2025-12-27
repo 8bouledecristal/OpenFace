@@ -3,9 +3,10 @@
   "build" : {
     "dockerfile" : "../Dockerfile"
   },
-  "workspaceFolder": "/workspace",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/root/openface",
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    "source=${localWorkspaceFolder},target=/root/openface,type=bind"
   ],
   "customizations": {
     "vscode": {

@@ -42,6 +42,8 @@ RUN apt-get update -qq &&\
         ffmpeg libsm6 libxext6 && \
     rm -rf /var/lib/apt/lists/*
 
+RUN pip install numpy
+
 ## ==================== Build-time dependency libs ======================
 ## This will build and install opencv and dlib into an additional dummy
 ## directory, /root/diff, so we can later copy in these artifacts,
