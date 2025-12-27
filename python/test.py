@@ -24,10 +24,21 @@ def main():
     print("------------- DETECT -----------------")
     face_rects_max = detector.detect(img)
     print(face_rects_max)
+
     print("------------- DETECT Landmark-----------------")
     re = detector.landmark(img, face_rects_max)
     face_keypoints = [(int(kp[0]), int(kp[1])) for kp in zip(re[0], re[1])]
     print(face_keypoints)
+    
+    img_landmark = img.copy()
+    print("---- print landmark -----")
+    for face_keypoint in face_keypoints : 
+        img_landmark = cv2.circle(img_landmark, face_keypoint, radius=1, color=(0,0,255), thickness=-1)
+    cv2.imwrite("/root/openface/samples/processed/tesla_python.jpg", img_landmark)
+    
+    print("------------- GAZE --------------")
+    gaze = detector.getgaze(img)
+    print(gaze)
     
     # # tracker = pyopenface.Tracker()
     # 

@@ -94,11 +94,26 @@ py::array_t<double> landmark(Detector *detector, py::array_t<unsigned char>& inp
   return face_landmarks_arr;
 }
 
+py::dict getgaze(Detector *detector, py::array_t<unsigned char>& input) {
+    cv::Mat rgb_frame = numpy_uint8_to_mat(input, false);
+    py::dict gaze_angle_dict;
+    std::tuple<float, float> gaze_angle_tuple;
+
+    gaze_angle_tuple = detector->GetGaze(rgb_frame);
+
+    gaze_angle_dict["gaze_angle_x"] = std::get<0>(gaze_angle_tuple);
+    gaze_angle_dict["gaze_angle_y"] = std::get<1>(gaze_angle_tuple);
+
+    return gaze_angle_dict;
+}
+
+
 PYBIND11_MODULE(pyopenface, m) {
   
   py::class_<Detector>(m, "Detector")
     .def(py::init(&Detector::Create))
     .def("detect", &detect)
     .def("landmark", &landmark)
+    .def("getgaze", &getgaze)
     ;
 }

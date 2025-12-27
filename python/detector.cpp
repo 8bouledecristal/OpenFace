@@ -124,24 +124,39 @@ cv::Mat_<double> Detector::Run(cv::Mat &grayscale_frame, const cv::Mat &rgb_fram
     throw std::runtime_error("Unable to detect landmarks");
   }
 
-  // Gaze tracking, absolute gaze direction
-  cv::Point3f gaze_direction0(0, 0, -1);
-  cv::Point3f gaze_direction1(0, 0, -1);
-  cv::Vec2f gaze_angle(0, 0);
-
-  if (clnf_model_.eye_model)
-  {
-    GazeAnalysis::EstimateGaze(clnf_model_, gaze_direction0, 618.359f, 618.359f, 279.5f, 384.0f, true);
-    GazeAnalysis::EstimateGaze(clnf_model_, gaze_direction1, 618.359f, 618.359f, 279.5f, 384.0f, false);
-    gaze_angle = GazeAnalysis::GetGazeAngle(gaze_direction0, gaze_direction1);
-  }
-  std::cout << "gaze angle 0 : " << gaze_angle[0] << std::endl;
-  std::cout << "gaze angle 1 : " << gaze_angle[1] << std::endl;
-
   std::cout << "success : " << success << std::endl;
   cv::Mat_<double> landmarks_2d = clnf_model_.detected_landmarks;
   landmarks_2d = landmarks_2d.reshape(1, 2);
 
   return landmarks_2d;
+}
 
+std::tuple<float, float> Detector::GetGaze(const cv::Mat &rgb_frame) {
+  // // Gaze tracking, absolute gaze direction
+  cv::Point3f gaze_direction_left(0, 0, -1);
+  cv::Point3f gaze_direction_right(0, 0, -1);
+  cv::Vec2f gaze_angle(0, 0);
+
+  int image_width = rgb_frame.size().width;
+  int image_height = rgb_frame.size().height;
+  float cx = image_width / 2.0f;
+  float cy = image_height / 2.0f;
+  float fx = 500.0f * (image_width / 640.0f);
+  float fy = 500.0f * (image_height / 480.0f);
+  fx = (fx + fy) / 2.0f;
+  fy = fx;
+  // std::cout << "image width : " << image_width << std::endl;
+	// std::cout << "image height : " << image_height << std::endl;
+  // std::cout << "fx" << fx << std::endl;
+	// std::cout << "fy" << fy << std::endl;
+	// std::cout << "cx" << cx << std::endl;
+	// std::cout << "cy" << cy << std::endl;
+  if (clnf_model_.eye_model)
+  {
+    GazeAnalysis::EstimateGaze(clnf_model_, gaze_direction_left, fx, fy, cx, cy, true);
+    GazeAnalysis::EstimateGaze(clnf_model_, gaze_direction_right, fx, fy, cx, cy, false);
+    gaze_angle = GazeAnalysis::GetGazeAngle(gaze_direction_left, gaze_direction_right);
+  }
+
+  return std::tuple<float, float>(gaze_angle[0], gaze_angle[1]);
 }
