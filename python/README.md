@@ -33,3 +33,4 @@
 echo "/root/diff/usr/local/lib" > /etc/ld.so.conf.d/openface.conf
 ldconfig
 
+Modif

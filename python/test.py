@@ -2,6 +2,7 @@ import pyopenface
 import cv2
 import os
 import time
+import pandas as pd
 
 base_path = os.path.realpath(__file__)
 base_path = base_path[:base_path.find('OpenFace')]
@@ -19,6 +20,23 @@ def main():
     # detector = pyopenface.Detector(base_path + "OpenFace/lib/local/LandmarkDetector/model/main_clnf_general.txt")
     print("------------- DETECTOR init -----------------")
     detector = pyopenface.Detector('../lib/local/LandmarkDetector/model/main_ceclm_general.txt')
+    
+    gaze_angle_x = []
+    gaze_angle_y = []
+    cap = cv2.VideoCapture("../samples/test_gouget_cut.mp4")
+    while cap.isOpened() :
+        ret, frame = cap.read()
+        if not ret :
+            print("error frame")
+            break
+        re = detector.landmarkinvideo(frame)
+        gaze = detector.getgaze(frame)
+        gaze_angle_x.append(gaze["gaze_angle_x"])
+        gaze_angle_y.append(gaze["gaze_angle_y"])
+    
+    df = pd.DataFrame(data={"gaze_angle_x" : gaze_angle_x, "gaze_angle_y" : gaze_angle_y})
+    df.to_csv("../analyse/test_gouget_cut_python.csv")
+    
     # print("------------- Load Image -----------------")
     # img = cv2.imread("/root/openface/samples/tesla.jpg")
     # # print("------------- DETECT -----------------")

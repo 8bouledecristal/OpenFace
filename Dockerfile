@@ -43,6 +43,7 @@ RUN apt-get update -qq &&\
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install numpy
+RUN pip install "pybind11[global]"
 
 ## ==================== Build-time dependency libs ======================
 ## This will build and install opencv and dlib into an additional dummy

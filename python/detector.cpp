@@ -124,7 +124,7 @@ cv::Mat_<double> Detector::RunInVideo(cv::Mat &grayscale_frame, const cv::Mat &r
     throw std::runtime_error("Unable to detect landmarks");
   }
 
-  std::cout << "success : " << success << std::endl;
+  // std::cout << "success : " << success << std::endl;
   cv::Mat_<double> landmarks_2d = clnf_model_.detected_landmarks;
   landmarks_2d = landmarks_2d.reshape(1, 2);
 
