@@ -51,6 +51,37 @@ py::list detect(Detector *detector, py::array_t<unsigned char>& input)
     return list;
 }
 
+py::array_t<double> landmarkinvideo(Detector *detector, py::array_t<unsigned char>& input)
+{
+
+  cv::Mat grayscale_frame = numpy_uint8_to_mat(input, true);
+  cv::Mat rgb_frame = numpy_uint8_to_mat(input, false);
+
+    // Run detector
+  cv::Mat_<double> face_landmarks = detector->RunInVideo(grayscale_frame, rgb_frame);
+
+  // Make a heap-allocated copy
+  cv::Mat* cloned_landmarks = new cv::Mat(face_landmarks.clone());
+
+  py::buffer_info buf_info(
+      cloned_landmarks->data,                   // data pointer
+      sizeof(double),                           // size of one element
+      py::format_descriptor<double>::format(),  // Python struct-style format descriptor
+      2,                                        // number of dimensions
+      {cloned_landmarks->rows, cloned_landmarks->cols},          // shape
+      {cloned_landmarks->step[0], cloned_landmarks->step[1]}     // strides
+  );
+
+  // Create the NumPy array and attach a capsule that deletes the cv::Mat
+  py::array face_landmarks_arr(buf_info,
+      py::capsule(cloned_landmarks, [](void *p) {
+          delete static_cast<cv::Mat*>(p);
+      })
+  );
+
+  return face_landmarks_arr;
+}
+
 py::array_t<double> landmark(Detector *detector, py::array_t<unsigned char>& input, const py::list& rect_object)
 {
 
@@ -114,6 +145,7 @@ PYBIND11_MODULE(pyopenface, m) {
     .def(py::init(&Detector::Create))
     .def("detect", &detect)
     .def("landmark", &landmark)
+    .def("landmarkinvideo", &landmarkinvideo)
     .def("getgaze", &getgaze)
     ;
 }

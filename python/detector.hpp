@@ -18,6 +18,7 @@ class Detector {
 public:
   static Detector * Create(const char *binary_path);
   cv::Mat_<double> Run(cv::Mat &grayscale_frame, const cv::Mat &rgb_frame, const cv::Rect_<double> face_rect);
+  cv::Mat_<double> RunInVideo(cv::Mat &grayscale_frame, const cv::Mat &rgb_frame);
   cv::Rect_<double> DetectFace(const cv::Mat &grayscale_frame, const cv::Mat &rgb_frame);
   std::tuple<float, float> GetGaze(const cv::Mat &rgb_frame);
 

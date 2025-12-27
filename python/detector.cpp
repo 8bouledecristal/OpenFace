@@ -114,6 +114,23 @@ cv::Rect_<double> Detector::DetectFace(const cv::Mat &grayscale_frame, const cv:
 //   return clnf_model_.patch_experts.visibilities[0][idx];
 // }
 
+cv::Mat_<double> Detector::RunInVideo(cv::Mat &grayscale_frame, const cv::Mat &rgb_frame){
+
+  cv::Mat_<float> depth_image;
+  bool success = LandmarkDetector::DetectLandmarksInVideo(rgb_frame, clnf_model_, det_parameters_, grayscale_frame);
+
+
+  if (!success) {
+    throw std::runtime_error("Unable to detect landmarks");
+  }
+
+  std::cout << "success : " << success << std::endl;
+  cv::Mat_<double> landmarks_2d = clnf_model_.detected_landmarks;
+  landmarks_2d = landmarks_2d.reshape(1, 2);
+
+  return landmarks_2d;
+}
+
 cv::Mat_<double> Detector::Run(cv::Mat &grayscale_frame, const cv::Mat &rgb_frame, const cv::Rect_<double> face_rect){
 
   cv::Mat_<float> depth_image;
