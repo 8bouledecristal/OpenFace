@@ -116,11 +116,11 @@ FaceAnalyserParameters::FaceAnalyserParameters(std::vector<std::string> &argumen
 	if (dynamic)
 	{
 		// TODO pas écrire les hardcoded path
-		this->model_location = "/root/openface/lib/local/FaceAnalyser/AU_predictors/main_dynamic_svms.txt";
+		this->model_location = "AU_predictors/main_dynamic_svms.txt";
 	}
 	else
 	{
-		this->model_location = "/root/openface/lib/local/FaceAnalyser/AU_predictors/main_static_svms.txt";
+		this->model_location = "AU_predictors/main_static_svms.txt";
 	}
 
 	// If we set the size but not the scale, adapt the scale to the right size

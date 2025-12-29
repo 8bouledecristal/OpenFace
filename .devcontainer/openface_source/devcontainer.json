@@ -1,7 +1,7 @@
 {
   "name": "OpenFace DevContainer",
   "build" : {
-    "dockerfile" : "../Dockerfile"
+    "dockerfile" : "../../Dockerfile"
   },
   "remoteUser": "root",
   "workspaceFolder": "/root/openface",

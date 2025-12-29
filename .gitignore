@@ -108,3 +108,4 @@ lib/python/build
 .idea
 samples
 analyse
+test_fe

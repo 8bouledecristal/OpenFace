@@ -88,6 +88,16 @@ FaceModelParameters::FaceModelParameters(std::vector<std::string> &arguments)
 			valid[i + 1] = false;
 			i++;
 		}
+
+		if (arguments[i].compare("-mtcnn_face_detector_location") ==0)
+		{
+			std::string face_detector_loc = arguments[i + 1];
+			mtcnn_face_detector_location = face_detector_loc;
+			valid[i] = false;
+			valid[i + 1] = false;
+			i++;
+		}
+
 		if (arguments[i].compare("-sigma") == 0)
 		{
 			std::stringstream data(arguments[i + 1]);
@@ -331,8 +341,8 @@ void FaceModelParameters::init()
 
 	// Face detection
 	// TODO ne pas hardcoder les paths
-	haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_alt.xml";
-	mtcnn_face_detector_location = "/root/openface/lib/local/LandmarkDetector/model/mtcnn_detector/MTCNN_detector.txt";
+	// haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_alt.xml";
+	// mtcnn_face_detector_location = "/root/openface/lib/local/LandmarkDetector/model/mtcnn_detector/MTCNN_detector.txt";
 
 	// By default use MTCNN
 	curr_face_detector = MTCNN_DETECTOR;

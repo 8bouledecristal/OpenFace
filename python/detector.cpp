@@ -11,12 +11,18 @@ using std::cout;
 using std::string;
 using std::vector;
 
-Detector * Detector::Create(const char *binary_path) {
+Detector * Detector::Create(const char *binary_path, const char *haar_face_detector_location, const char *mtcnn_face_detector_location) {
 
   vector<string> arguments;
   arguments.push_back(string("  ")); // if CPP this is the application name
   arguments.push_back(string("-mloc"));
   arguments.push_back(string(binary_path));
+  arguments.push_back(string("  "));
+  arguments.push_back(string("-fdloc"));
+  arguments.push_back(string(haar_face_detector_location));
+  arguments.push_back(string("  "));
+  arguments.push_back(string("-mtcnn_face_detector_location"));
+  arguments.push_back(string(mtcnn_face_detector_location));
 
   LandmarkDetector::FaceModelParameters det_parameters(arguments);
   std::cout << "model location " << det_parameters.model_location << std::endl;
@@ -52,7 +58,8 @@ Detector * Detector::Create(const char *binary_path) {
 
   
 
-  det_parameters.haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_default.xml";
+  // det_parameters.haar_face_detector_location = "/root/openface/lib/3rdParty/OpenCV/classifiers/haarcascade_frontalface_default.xml";
+  // det_parameters.haar_face_detector_location = haar_face_detector_location;
   cv::CascadeClassifier classifier(det_parameters.haar_face_detector_location);
   
   dlib::frontal_face_detector face_detector_hog = dlib::get_frontal_face_detector();
