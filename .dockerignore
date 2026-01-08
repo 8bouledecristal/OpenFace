@@ -10,4 +10,8 @@ model_training
 gui
 data
 ./opengaze/testr.py
-
+analyse
+test_fe
+.vscode
+.devcontainer
+.github

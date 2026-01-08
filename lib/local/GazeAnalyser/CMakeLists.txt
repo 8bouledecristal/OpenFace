@@ -12,7 +12,7 @@ SET(HEADERS
     include/GazeEstimation.h
 )
 
-add_library( GazeAnalyser ${SOURCE} ${HEADERS})
+add_library( GazeAnalyser SHARED ${SOURCE} ${HEADERS})
 add_library( OpenFace::GazeAnalyser ALIAS GazeAnalyser)
 
 target_include_directories(GazeAnalyser PUBLIC
@@ -26,6 +26,8 @@ target_link_libraries(GazeAnalyser PUBLIC ${OpenCV_LIBS} ${OpenBLAS_LIB})
 target_link_libraries(GazeAnalyser PUBLIC dlib::dlib)
 
 target_include_directories(GazeAnalyser PRIVATE ${OpenBLAS_INCLUDE_DIR})
+
+set_target_properties(FaceAnalyser PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
 install (TARGETS GazeAnalyser EXPORT OpenFaceTargets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install (FILES ${HEADERS} DESTINATION include/OpenFace)

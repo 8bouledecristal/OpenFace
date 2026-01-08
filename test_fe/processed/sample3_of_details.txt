@@ -1,0 +1,6 @@
+Input:../samples/sample3.jpg
+Input full path:/root/openface/samples/sample3.jpg
+Camera parameters:458.333,458.333,320,200
+Output HOG:sample3.hog
+Output video:sample3.avi
+Output aligned directory:sample3_aligned

@@ -27,7 +27,7 @@ SET(HEADERS
 )
 
 
-add_library( FaceAnalyser ${SOURCE} ${HEADERS})
+add_library( FaceAnalyser SHARED ${SOURCE} ${HEADERS})
 add_library( OpenFace::FaceAnalyser ALIAS FaceAnalyser)
 
 target_include_directories(FaceAnalyser PUBLIC
@@ -48,6 +48,8 @@ else()
 endif()
 
 target_include_directories(FaceAnalyser PRIVATE ${OpenBLAS_INCLUDE_DIR})
+
+set_target_properties(FaceAnalyser PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
 install (TARGETS FaceAnalyser EXPORT OpenFaceTargets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install (FILES ${HEADERS} DESTINATION include/OpenFace)

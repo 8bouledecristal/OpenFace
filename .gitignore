@@ -102,6 +102,10 @@ lib/local/Utilities/Debug/
 lib/3rdParty/CameraEnumerator/Debug/
 lib/local/CppInerop/Debug/
 *.user
+lib/python/build
 
 # IDE-generated folders
 .idea
+samples
+analyse
+test_fe

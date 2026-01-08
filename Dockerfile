@@ -4,7 +4,9 @@
 # miss, or the dockerfile changes prior to this step.
 # To update these patch files, be sure to run build with --no-cache
 FROM alpine as model_data
-RUN apk --no-cache --update-cache add wget
+# Ici on run pas tout le temps le --no-cache pour aller plus vite dans la compilation.
+# RUN apk --no-cache --update-cache add wget
+RUN apk add wget
 WORKDIR /data/patch_experts
 
 RUN wget -q https://www.dropbox.com/s/7na5qsjzz8yfoer/cen_patches_0.25_of.dat &&\
@@ -16,26 +18,29 @@ RUN wget -q https://www.dropbox.com/s/7na5qsjzz8yfoer/cen_patches_0.25_of.dat &&
 ## This will be our base image for OpenFace, and also the base for the compiler
 ## image. We only need packages which are linked
 
-FROM arm64v8/ubuntu:18.04 as ubuntu_base
+# On définit l'architecture cible
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
+FROM --platform=$TARGETPLATFORM ubuntu:20.04 as ubuntu_base
+RUN echo "Building for platform : ${TARGETPLATFORM}, arch : ${TARGETARCH}"
 
 LABEL maintainer="Michael McDermott <mikemcdermott23@gmail.com>"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 # todo: minimize this even more
-RUN apt-get update -qq  &&\
-    apt-get install -qq curl  &&\
+RUN apt-get update -qq &&\
+    apt-get install -qq curl &&\
     apt-get install -qq --no-install-recommends \
-    	libopenblas-dev liblapack-dev \
-    	libavcodec-dev libavformat-dev libswscale-dev \
-    	libtbb2 libtbb-dev libjpeg-dev \
-	libpng-dev libtiff-dev  &&\
-	rm -rfv /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y libopenblas-dev
-
-RUN echo OUI
-RUN ldconfig -p | grep openblas
+        libopenblas-dev liblapack-dev \
+        libavcodec-dev libavformat-dev libswscale-dev \
+        libtbb2 libtbb-dev libjpeg-dev \
+        libpng-dev libtiff-dev python3-dev \ 
+        libboost-python-dev libboost-filesystem-dev \
+        libboost-system-dev python3-pip \
+        ffmpeg libsm6 libxext6 && \
+    rm -rf /var/lib/apt/lists/*
 
 ## ==================== Build-time dependency libs ======================
 ## This will build and install opencv and dlib into an additional dummy
@@ -49,7 +54,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && apt-get install -qq -y \
         cmake ninja-build pkg-config build-essential checkinstall\
-        g++-8 &&\
+        g++-8 ccache &&\
     rm -rf /var/lib/apt/lists/* &&\
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
@@ -60,10 +65,21 @@ RUN curl http://dlib.net/files/dlib-19.13.tar.bz2 -LO &&\
     tar xf dlib-19.13.tar.bz2 && \
     rm dlib-19.13.tar.bz2 &&\
     mv dlib-19.13 dlib &&\
-    mkdir -p dlib/build &&\
-    cd dlib/build &&\
-    cmake -DCMAKE_BUILD_TYPE=Release -G Ninja .. &&\
-    ninja && \
+    mkdir -p dlib/build
+
+# TODO Le flag USE_AVX_INSTRUCTIONS peut causer des problèmes 
+# TODO sur ARM64, il faut donc faire une condition. 
+RUN cd dlib/build && \
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -G Ninja \
+          -DDLIB_USE_CUDA=OFF \
+          -DUSE_AVX_INSTRUCTIONS=ON \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+          -DDLIB_NO_GUI_SUPPORT=ON \
+          -DBUILD_SHARED_LIBS=ON \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache .. &&\
+    ninja  && \
     ninja install && \
     DESTDIR=/root/diff ninja install &&\
     ldconfig
@@ -76,7 +92,9 @@ RUN curl https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.tar.gz -LO &
     rm ${OPENCV_VERSION}.tar.gz &&\
     mv opencv-${OPENCV_VERSION} opencv && \
     mkdir -p opencv/build && \
-    cd opencv/build && \
+    cd opencv/build 
+
+RUN cd opencv/build && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
         -D CMAKE_INSTALL_PREFIX=/usr/local \
         -D WITH_TBB=ON -D WITH_CUDA=OFF \
@@ -86,25 +104,23 @@ RUN curl https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.tar.gz -LO &
     ninja install &&\
     DESTDIR=/root/diff ninja install
 
+RUN pip install numpy
+RUN pip install "pybind11[global]"
+
 ## ==================== Building OpenFace ===========================
 FROM cv_deps as openface
 WORKDIR /root/openface
 
-COPY ./ ./
+COPY . .
 
 COPY --from=model_data /data/patch_experts/* \
     /root/openface/lib/local/LandmarkDetector/model/patch_experts/
 
-
 RUN mkdir -p build && cd build && \
-    CXX=g++-8 CC=gcc-8 cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D OpenBLAS_INCLUDE_DIR=/usr/include \
-    -D OpenBLAS_LIB=/usr/lib/aarch64-linux-gnu/libopenblas.so \
-    -G Ninja .. \
-    -DCMAKE_CXX_FLAGS="-march=armv8-a" \
-    -DCMAKE_C_FLAGS="-march=armv8-a" && \
-    ninja && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE -G Ninja .. && \
+    ninja &&\
     DESTDIR=/root/diff ninja install
+
 
 
 ## ==================== Streamline container ===========================
@@ -120,20 +136,4 @@ COPY --from=openface /root/diff /
 # Since we "imported" the build artifacts, we need to reconfigure ld
 RUN ldconfig
 
-
-## ==================== Python ===========================
-
-WORKDIR /root/openface/opengaze
-
-COPY ./opengaze .
-
-# Install Python and FastAPI dependencies
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    pip3 install -r requirements.txt
-    # pip3 install --no-cache-dir fastapi uvicorn==0.16.0
-
-# # Copy FastAPI application
-# COPY main.py /root/main.py
-
-# # Expose FastAPI port
-EXPOSE 8000
+RUN pip install opencv-python

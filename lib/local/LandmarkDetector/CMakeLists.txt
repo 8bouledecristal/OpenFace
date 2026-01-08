@@ -1,63 +1,67 @@
+# LandmarkDetector/CMakeLists.txt
 
-#Utilities library
-include_directories(../../local/Utilities/include)
+# Dependencies
+include_directories(${TBB_ROOT_DIR}/include)
+include_directories(${BOOST_INCLUDE_DIR})
+include_directories(./include)
 
-SET(SOURCE
+# Source files
+set(SOURCE
     src/CCNF_patch_expert.cpp
-	src/CEN_patch_expert.cpp
-	src/CNN_utils.cpp
-	src/FaceDetectorMTCNN.cpp
-	src/LandmarkDetectionValidator.cpp
+    src/FaceDetectorMTCNN.cpp
+    src/CEN_patch_expert.cpp
+    src/LandmarkDetectionValidator.cpp
     src/LandmarkDetectorFunc.cpp
-	src/LandmarkDetectorModel.cpp
+    src/LandmarkDetectorModel.cpp
     src/LandmarkDetectorUtils.cpp
-	src/LandmarkDetectorParameters.cpp
-	src/Patch_experts.cpp
-	src/PAW.cpp
+    src/LandmarkDetectorParameters.cpp
+    src/Patch_experts.cpp
+    src/PAW.cpp
     src/PDM.cpp
-	src/SVR_patch_expert.cpp
-	src/stdafx.cpp
+    src/SVR_patch_expert.cpp
+    src/stdafx.cpp
+    src/CNN_utils.cpp
 )
 
-SET(HEADERS
-    include/CCNF_patch_expert.h	
-	include/CEN_patch_expert.h
-    include/CNN_utils.h
-	include/FaceDetectorMTCNN.h
+set(HEADERS
+    include/CCNF_patch_expert.h    
     include/LandmarkCoreIncludes.h
-	include/LandmarkDetectionValidator.h
+    include/LandmarkDetectionValidator.h
     include/LandmarkDetectorFunc.h
-	include/LandmarkDetectorModel.h
-	include/LandmarkDetectorParameters.h
-	include/LandmarkDetectorUtils.h
-	include/Patch_experts.h	
+    include/LandmarkDetectorModel.h
+    include/LandmarkDetectorParameters.h
+    include/LandmarkDetectorUtils.h
+    include/Patch_experts.h    
     include/PAW.h
-	include/PDM.h
-	include/SVR_patch_expert.h		
-	include/stdafx.h
+    include/PDM.h
+    include/SVR_patch_expert.h        
+    include/stdafx.h
+    include/CNN_utils.h
 )
 
-add_library( LandmarkDetector ${SOURCE} ${HEADERS} )
-add_library( OpenFace::LandmarkDetector ALIAS LandmarkDetector)
+# Build a single shared library
+add_library(LandmarkDetectorShared SHARED ${SOURCE} ${HEADERS})
 
-target_include_directories(LandmarkDetector PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/OpenFace>)
+# Include directories for consumers
+target_include_directories(LandmarkDetectorShared PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${OpenCV_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${TBB_ROOT_DIR}/include
+)
 
-target_include_directories(LandmarkDetector PRIVATE ${LandmarkDetector_SOURCE_DIR}/include)
-target_include_directories(LandmarkDetector PUBLIC ${OpenCV_INCLUDE_DIRS})
+# Link dependencies
+target_link_libraries(LandmarkDetectorShared
+    PUBLIC
+        Utilities
+        ${OpenCV_LIBS}
+        ${Boost_LIBRARIES}
+        ${TBB_LIBRARIES}
+)
 
-target_link_libraries(LandmarkDetector PUBLIC ${OpenCV_LIBS} ${OpenBLAS_LIB})
-target_link_libraries(LandmarkDetector PUBLIC dlib::dlib)
+# Position independent code
+set_target_properties(LandmarkDetectorShared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-if(${Boost_FOUND})
-	target_include_directories(LandmarkDetector PUBLIC ${Boost_INCLUDE_DIRS})
-	target_link_libraries(LandmarkDetector PUBLIC ${Boost_LIBRARIES})
-else()
-	target_link_libraries(LandmarkDetector PUBLIC stdc++fs)
-endif()
-
-target_include_directories(LandmarkDetector PRIVATE ${OpenBLAS_INCLUDE_DIR})
-
-install (TARGETS LandmarkDetector EXPORT OpenFaceTargets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-install (FILES ${HEADERS} DESTINATION include/OpenFace)
+# Install
+install(TARGETS LandmarkDetectorShared LIBRARY DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/OpenFace)

@@ -1,0 +1,24 @@
+{
+  "name": "OpenFace DevContainer",
+  "build" : {
+    "dockerfile" : "../../Dockerfile"
+  },
+  "remoteUser": "root",
+  "workspaceFolder": "/root/openface",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/root/openface,type=bind",
+    "source=openface-build,target=/root/openface/build,type=volume"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools-extension-pack",
+        "mechatroner.rainbow-csv"
+      ]
+    }
+  }
+}
